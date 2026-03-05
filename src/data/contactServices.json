@@ -1,0 +1,50 @@
+[
+  {
+    "id": "fenster",
+    "title": { "de": "Fenster", "en": "Windows" },
+    "description": {
+      "de": "Hochwertige Fensterlösungen mit Fokus auf Wärmedämmung, Schallschutz und modernes Design.",
+      "en": "High-quality window solutions focused on thermal insulation, acoustic comfort, and modern design."
+    },
+    "tags": {
+      "de": ["Energieeffizienz", "Schallschutz", "Maßanfertigung"],
+      "en": ["Energy efficiency", "Sound insulation", "Custom sizing"]
+    }
+  },
+  {
+    "id": "tueren",
+    "title": { "de": "Türen", "en": "Doors" },
+    "description": {
+      "de": "Sichere und elegante Haustüren mit langlebigen Materialien und präziser Montage.",
+      "en": "Secure and elegant entrance doors with durable materials and precise installation."
+    },
+    "tags": {
+      "de": ["Sicherheit", "Design", "Langlebigkeit"],
+      "en": ["Security", "Design", "Durability"]
+    }
+  },
+  {
+    "id": "rolllaeden",
+    "title": { "de": "Rollläden", "en": "Shutters" },
+    "description": {
+      "de": "Effiziente Rollladensysteme für Sonnenschutz, Privatsphäre und bessere Energiebilanz.",
+      "en": "Efficient shutter systems for sun protection, privacy, and improved energy performance."
+    },
+    "tags": {
+      "de": ["Sonnenschutz", "Privatsphäre", "Automatisierung"],
+      "en": ["Sun control", "Privacy", "Automation"]
+    }
+  },
+  {
+    "id": "raffstore",
+    "title": { "de": "Raffstore", "en": "Raffstore" },
+    "description": {
+      "de": "Flexible Lichtlenkung mit modernen Raffstore-Lösungen für Fassaden und große Glasflächen.",
+      "en": "Flexible daylight control with modern raffstore solutions for facades and large glass areas."
+    },
+    "tags": {
+      "de": ["Lichtsteuerung", "Fassade", "Komfort"],
+      "en": ["Light control", "Facade", "Comfort"]
+    }
+  }
+]

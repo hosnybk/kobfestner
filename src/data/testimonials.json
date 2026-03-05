@@ -1,0 +1,26 @@
+[
+  {
+    "id": "anna",
+    "author": "Anna M.",
+    "quote": {
+      "de": "Ausgezeichneter Service von der Beratung bis zur Montage. Die Fensterqualität ist wirklich premium.",
+      "en": "Excellent service from consultation to installation. The window quality is truly premium."
+    }
+  },
+  {
+    "id": "marc",
+    "author": "Marc L.",
+    "quote": {
+      "de": "Sehr saubere Arbeit, klare Kommunikation und zuverlässige Termine. KOB Fenster empfehlen wir gerne weiter.",
+      "en": "Very clean work, great communication, and clear timelines. We fully recommend KOB Fenster."
+    }
+  },
+  {
+    "id": "sophie",
+    "author": "Sophie R.",
+    "quote": {
+      "de": "Unsere Energieeffizienz hat sich nach dem Austausch der alten Türen und Rollläden deutlich verbessert.",
+      "en": "Our energy efficiency clearly improved after replacing old doors and shutters."
+    }
+  }
+]

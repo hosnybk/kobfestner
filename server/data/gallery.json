@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "category": "fenster",
+    "image": "/gallery/1.jpg"
+  },
+  {
+    "id": 2,
+    "category": "tueren",
+    "image": "/gallery/2.jpg"
+  },
+  {
+    "id": 3,
+    "category": "rolllaeden",
+    "image": "/gallery/3.jpg"
+  }
+]
