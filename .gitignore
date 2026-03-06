@@ -27,3 +27,6 @@ dist-ssr
 # Build artifacts
 *.zip
 dist.zip
+
+# Azure
+swa-cli.config.json
