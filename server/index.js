@@ -437,26 +437,53 @@ app.post('/api/contact', async (req, res) => {
 
 
 // Upload endpoint (auth required)
-app.post('/api/uploads', requireAuth, upload.single('file'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file' })
+app.post('/api/uploads', requireAuth, (req, res, next) => {
+  // Debug logging
+  console.log('Upload request start')
+  next()
+}, upload.single('file'), async (req, res) => {
+  console.log('Upload file processed:', req.file)
   
-  if (process.env.VERCEL) {
-     // On Vercel, we need to read the file from /tmp and return it as base64 or upload to external storage
-     // Since we don't have external storage, we will return a Data URI for immediate display
-     // Note: This is a temporary workaround. Real persistence requires S3/Cloudinary.
-     const buffer = await fs.readFile(req.file.path)
-     const base64 = buffer.toString('base64')
-     const mime = req.file.mimetype
-     const dataUrl = `data:${mime};base64,${base64}`
-     
-     // Clean up tmp file
-     try { await fs.unlink(req.file.path) } catch {}
-     
-     return res.status(201).json({ url: dataUrl })
+  if (!req.file) {
+    console.error('Upload error: No file received')
+    return res.status(400).json({ error: 'No file' })
   }
+  
+  try {
+    if (process.env.VERCEL) {
+       console.log('Vercel environment detected. Path:', req.file.path)
+       // On Vercel, we need to read the file from /tmp and return it as base64 or upload to external storage
+       // Since we don't have external storage, we will return a Data URI for immediate display
+       // Note: This is a temporary workaround. Real persistence requires S3/Cloudinary.
+       
+       // Verify file exists
+       try {
+         await fs.access(req.file.path)
+         console.log('File exists at path')
+       } catch (e) {
+         console.error('File not found at path:', e)
+         throw new Error('File upload failed: temp file not found')
+       }
 
-  const url = `/uploads/${req.file.filename}`
-  res.status(201).json({ url })
+       const buffer = await fs.readFile(req.file.path)
+       const base64 = buffer.toString('base64')
+       const mime = req.file.mimetype
+       const dataUrl = `data:${mime};base64,${base64}`
+       
+       // Clean up tmp file
+       try { await fs.unlink(req.file.path) } catch {}
+       
+       console.log('Upload successful (base64)')
+       return res.status(201).json({ url: dataUrl })
+    }
+
+    const url = `/uploads/${req.file.filename}`
+    console.log('Upload successful (local):', url)
+    res.status(201).json({ url })
+  } catch (err) {
+    console.error('Upload processing error:', err)
+    res.status(500).json({ error: 'Upload failed internal' })
+  }
 })
 
 // SPA fallback in production (all non-API routes)
