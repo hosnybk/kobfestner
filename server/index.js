@@ -23,7 +23,7 @@ const DIST_DIR = path.join(__dirname, '..', 'dist')
 const ensureDataFiles = async () => {
   await fs.mkdir(DATA_DIR, { recursive: true })
   // On Vercel, we can't persist data. We start with empty/default state every time the function wakes up.
-  // ... (default data initialization)
+  const defaultProducts = [
     { id: 1, model: '6108', category: 'tueren', image: '/products/6108.jpg', color: 'RAL 7016 / Dekorfolie Golden Oak', glazing: '3D Edelstahl Lisenen', handle: 'PQ 40 x 20 - 160mm', application: 'Eingangstür' },
     { id: 2, model: '6110', category: 'tueren', image: '/products/6110.jpg', color: 'RAL 9007 / Dekorfolie Montana', glazing: 'Satiniert, durchsichtige Streifen', handle: 'PS 10 - 1200mm', application: 'Eingangstür' },
     { id: 7, model: 'F-220', category: 'fenster', image: '/products/F-220.jpg', color: 'Anthrazit matt', glazing: '3-fach Wärmeschutz', handle: 'Alu-Griff standard', application: 'Neubau & Sanierung' }
