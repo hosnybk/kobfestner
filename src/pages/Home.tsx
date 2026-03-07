@@ -20,9 +20,9 @@ export default function Home() {
     showcase: string[]
   }
   const [categories, setCategories] = useState<Array<{ key: string; image: string }>>(
-    homeContent.categories.map((key) => ({ key, image: homeContent.categoryImages[key] }))
+    homeContent.categories.map((key) => ({ key, image: '/vite.svg' }))
   )
-  const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase)
+  const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase.map(() => '/vite.svg'))
   const locale = i18n.language.startsWith('en') ? 'en' : 'de'
   const testimonials = testimonialsData as Array<{ id: string; author: string; quote: { de: string; en: string } }>
   const getAuthorInitials = (author: string) =>

@@ -6,6 +6,8 @@ import { catalogProducts as fallbackProducts, type CatalogProduct } from '../dat
 import { pdfCatalogs } from '../data/pdfCatalogs'
 import { fetchProducts, fetchCategories } from '../lib/api'
 
+const demoImage = '/vite.svg'
+
 export default function Products() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -17,7 +19,7 @@ export default function Products() {
   const itemsPerPage = 6
   const catalogSliderRef = useRef<HTMLDivElement | null>(null)
 
-  const [allProducts, setAllProducts] = useState<CatalogProduct[]>(fallbackProducts)
+  const [allProducts, setAllProducts] = useState<CatalogProduct[]>(fallbackProducts.map((p) => ({ ...p, image: demoImage })))
   useEffect(() => {
     let alive = true
 

@@ -58,7 +58,8 @@ export default function Gallery() {
       }
     }
   }, [])
-  const activeCategory = categories.includes(selectedCategory) ? selectedCategory : 'all'
+  const uniqueCategories = Array.from(new Set(categories.map((c) => String(c || '').toLowerCase()))).filter((c) => c && c !== 'all')
+  const activeCategory = uniqueCategories.includes(selectedCategory) ? selectedCategory : 'all'
   const filteredProjects = useMemo(() => projects.filter((project) => activeCategory === 'all' || project.category === activeCategory), [projects, activeCategory])
   const visibleProjects = filteredProjects.slice(0, visibleCount)
 
@@ -89,7 +90,7 @@ export default function Gallery() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">{t('galleryPage.title')}</h1>
           <p className="mt-3 max-w-3xl text-neutral-700">{t('galleryPage.subtitle')}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            {(['all', ...categories] as string[]).map((category) => (
+            {(['all', ...uniqueCategories] as string[]).map((category) => (
               <button
                 key={category}
                 type="button"

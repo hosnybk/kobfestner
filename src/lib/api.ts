@@ -40,6 +40,8 @@ function toLocalizedText(value: unknown): { de?: string; en?: string } | undefin
   return undefined
 }
 
+const DEMO_IMAGE = '/vite.svg'
+
 export async function fetchProducts(): Promise<CatalogProduct[]> {
   try {
     const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
@@ -47,17 +49,14 @@ export async function fetchProducts(): Promise<CatalogProduct[]> {
     const items = (await res.json()) as unknown
     if (!isArray(items) || items.length === 0) throw new Error('Empty')
 
-    const { catalogProducts } = await import('../data/catalogProducts')
-    const demoImage = catalogProducts?.[0]?.image || '/products/6108.jpg'
-
     return (items as CatalogProduct[]).map((p) => ({
       ...p,
-      image: p.image ? toAbsolute(p.image) : demoImage,
+      image: p.image ? toAbsolute(p.image) : DEMO_IMAGE,
       datasheet: p.datasheet ? toAbsolute(p.datasheet) : p.datasheet
     }))
   } catch {
     const { catalogProducts } = await import('../data/catalogProducts')
-    return catalogProducts
+    return catalogProducts.map((p) => ({ ...p, image: DEMO_IMAGE }))
   }
 }
 
@@ -68,15 +67,12 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
     const items = (await res.json()) as unknown
     if (!isArray(items) || items.length === 0) throw new Error('Empty')
 
-    const { galleryProjects } = await import('../data/galleryProjects')
-    const demoImage = galleryProjects?.[0]?.image || '/gallery/1.jpg'
-
     return (items as Array<Record<string, unknown>>).map((raw) => {
       const it = raw as { id: number; category: string; image: string; title?: unknown; description?: unknown; location?: unknown }
       return {
         id: Number(it.id),
         category: String(it.category || ''),
-        image: it.image ? toAbsolute(String(it.image)) : demoImage,
+        image: it.image ? toAbsolute(String(it.image)) : DEMO_IMAGE,
         title: toLocalizedText(it.title),
         description: toLocalizedText(it.description),
         location: toLocalizedText(it.location)
@@ -84,7 +80,7 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
     })
   } catch {
     const { galleryProjects } = await import('../data/galleryProjects')
-    return galleryProjects
+    return galleryProjects.map((g) => ({ ...g, image: DEMO_IMAGE }))
   }
 }
 
@@ -112,13 +108,12 @@ export async function fetchCategoriesDetailed(): Promise<CategoryDetail[]> {
     if (!res.ok) throw new Error('Bad response')
     const arr = (await res.json()) as unknown
     if (!isArray(arr) || arr.length === 0) throw new Error('Empty')
-    return (arr as CategoryDetail[]).map((c) => ({ ...c, image: c.image ? toAbsolute(c.image) : c.image }))
+    return (arr as CategoryDetail[]).map((c) => ({ ...c, image: c.image ? toAbsolute(c.image) : DEMO_IMAGE }))
   } catch {
     // Fallback with images from homeContent if available
     const hc: { default?: { categories?: string[]; categoryImages?: Record<string, string> } } = await import('../data/homeContent.json')
-    const images: Record<string, string> = hc.default?.categoryImages || {}
     const cats: string[] = hc.default?.categories || ['fenster', 'tueren', 'rolllaeden', 'raffstore']
-    return cats.map((id) => ({ id, enabled: true, image: images[id] }))
+    return cats.map((id) => ({ id, enabled: true, image: DEMO_IMAGE }))
   }
 }
 
