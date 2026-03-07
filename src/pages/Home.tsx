@@ -22,33 +22,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Array<{ key: string; image: string }>>(
     homeContent.categories.map((key) => ({ key, image: homeContent.categoryImages[key] }))
   )
-  useEffect(() => {
-    fetchCategoriesDetailed()
-      .then((items) => {
-        // Only show enabled categories
-        const actives = items.filter((c) => c.enabled !== false)
-        if (!actives.length) return
-        
-        const next = actives.map((c) => ({
-          key: c.id,
-          // Use uploaded image, or fallback to default map, or fallback to generic
-          image: c.image || homeContent.categoryImages[c.id] || '/categories/default.svg'
-        }))
-        setCategories(next)
-      })
-      .catch((e) => console.error('Failed to load categories', e))
-  }, [homeContent.categoryImages])
   const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase)
-  useEffect(() => {
-    fetchGallery()
-      .then((items) => {
-        if (items && items.length) {
-          const latest = items.slice(-6).map((g) => g.image).reverse()
-          setShowcaseImages(latest)
-        }
-      })
-      .catch(() => {})
-  }, [])
   const locale = i18n.language.startsWith('en') ? 'en' : 'de'
   const testimonials = testimonialsData as Array<{ id: string; author: string; quote: { de: string; en: string } }>
   const getAuthorInitials = (author: string) =>
@@ -140,8 +114,85 @@ export default function Home() {
   const [productFilter, setProductFilter] = useState<'all' | HomeCategoryKey>('all')
   const sliderRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
-    fetchProducts().then(setProducts).catch(() => {})
-  }, [])
+    let alive = true
+
+    const refreshCategories = async () => {
+      try {
+        const items = await fetchCategoriesDetailed()
+        if (!alive) return
+        const actives = items.filter((c) => c.enabled !== false)
+        if (!actives.length) return
+        const next = actives.map((c) => ({
+          key: c.id,
+          image: c.image || homeContent.categoryImages[c.id] || '/categories/default.svg'
+        }))
+        setCategories(next)
+      } catch {
+        void 0
+      }
+    }
+
+    const refreshGallery = async () => {
+      try {
+        const items = await fetchGallery()
+        if (!alive) return
+        if (items && items.length) {
+          const latest = items.slice(-6).map((g) => g.image).reverse()
+          setShowcaseImages(latest)
+        }
+      } catch {
+        void 0
+      }
+    }
+
+    const refreshProducts = async () => {
+      try {
+        const items = await fetchProducts()
+        if (!alive) return
+        setProducts(items)
+      } catch {
+        void 0
+      }
+    }
+
+    const refreshAll = () => {
+      refreshCategories()
+      refreshGallery()
+      refreshProducts()
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refreshAll()
+    }
+
+    refreshAll()
+
+    let ch: BroadcastChannel | null = null
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('kobfenster-updates')
+        ch.onmessage = () => refreshAll()
+      }
+    } catch {
+      ch = null
+    }
+
+    window.addEventListener('focus', refreshAll)
+    document.addEventListener('visibilitychange', onVisibility)
+    const id = window.setInterval(refreshAll, 60_000)
+
+    return () => {
+      alive = false
+      window.removeEventListener('focus', refreshAll)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.clearInterval(id)
+      try {
+        ch?.close()
+      } catch {
+        void 0
+      }
+    }
+  }, [homeContent.categoryImages])
   const filteredProducts = products.filter((p) => productFilter === 'all' || p.category === productFilter)
   const [isPaused, setIsPaused] = useState(false)
   const scrollBy = (dir: 'left' | 'right') => {

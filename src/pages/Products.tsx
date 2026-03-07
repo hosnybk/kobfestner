@@ -11,15 +11,6 @@ export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedCategory = (searchParams.get('category') || '').toLowerCase()
   const [categories, setCategories] = useState<string[]>(['fenster', 'tueren', 'rolllaeden', 'raffstore'])
-  useEffect(() => {
-    let on = true
-    fetchCategories().then((cats) => {
-      if (on && Array.isArray(cats) && cats.length) setCategories(cats)
-    })
-    return () => {
-      on = false
-    }
-  }, [])
   const activeCategory = categories.includes(selectedCategory) ? selectedCategory : 'all'
   const [page, setPage] = useState(1)
   const [isCatalogAutoScrollPaused, setIsCatalogAutoScrollPaused] = useState(false)
@@ -28,12 +19,49 @@ export default function Products() {
 
   const [allProducts, setAllProducts] = useState<CatalogProduct[]>(fallbackProducts)
   useEffect(() => {
-    let active = true
-    fetchProducts().then((items) => {
-      if (active) setAllProducts(items)
-    })
+    let alive = true
+
+    const refresh = async () => {
+      try {
+        const [cats, items] = await Promise.all([fetchCategories(), fetchProducts()])
+        if (!alive) return
+        if (Array.isArray(cats) && cats.length) setCategories(cats)
+        setAllProducts(items)
+      } catch {
+        void 0
+      }
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    refresh()
+
+    let ch: BroadcastChannel | null = null
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('kobfenster-updates')
+        ch.onmessage = () => refresh()
+      }
+    } catch {
+      ch = null
+    }
+
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', onVisibility)
+    const id = window.setInterval(refresh, 60_000)
+
     return () => {
-      active = false
+      alive = false
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.clearInterval(id)
+      try {
+        ch?.close()
+      } catch {
+        void 0
+      }
     }
   }, [])
   const filteredProducts = useMemo(

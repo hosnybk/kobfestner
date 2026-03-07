@@ -32,6 +32,17 @@ export default function AdminDashboard() {
     }
   }
 
+  const broadcastUpdate = (kind: string) => {
+    try {
+      if (typeof BroadcastChannel === 'undefined') return
+      const ch = new BroadcastChannel('kobfenster-updates')
+      ch.postMessage({ kind, ts: Date.now() })
+      ch.close()
+    } catch {
+      void 0
+    }
+  }
+
   useEffect(() => {
     let active = true
     authMe().then((me) => {
@@ -114,6 +125,7 @@ export default function AdminDashboard() {
         setProducts((arr) => [...arr, saved])
       }
       setEditing(null)
+      broadcastUpdate('products')
     } catch (e) {
       const msg = getErrMsg(e)
       setActionError(msg)
@@ -126,6 +138,7 @@ export default function AdminDashboard() {
       setActionError(null)
       await deleteProduct(id)
       setProducts((arr) => arr.filter((p) => p.id !== id))
+      broadcastUpdate('products')
     } catch (e) {
       const msg = getErrMsg(e)
       setActionError(msg)
@@ -146,6 +159,7 @@ export default function AdminDashboard() {
       const item = await createGalleryItem({ category, image })
       setGallery((arr) => [...arr, item])
       formEl.reset()
+      broadcastUpdate('gallery')
     } catch (e) {
       const msg = getErrMsg(e)
       setActionError(msg)
@@ -232,6 +246,7 @@ export default function AdminDashboard() {
                       setActionError(null)
                       await deleteGalleryItem(g.id)
                       setGallery((arr) => arr.filter((x) => x.id !== g.id))
+                      broadcastUpdate('gallery')
                     } catch (e) {
                       const msg = getErrMsg(e)
                       setActionError(msg)
@@ -305,6 +320,7 @@ export default function AdminDashboard() {
                 const created = await createCategory(id, imageUrl)
                 setCategories((arr) => [...arr, created])
                 formEl.reset()
+                broadcastUpdate('categories')
               } catch (err) {
                 console.error('Category creation failed:', err)
                 const msg = getErrMsg(err)
@@ -333,8 +349,16 @@ export default function AdminDashboard() {
                       <span className="block text-sm font-bold capitalize">{c.id}</span>
                       <label className="inline-flex items-center gap-2 text-xs text-gray-600 mt-1 cursor-pointer select-none">
                         <input type="checkbox" className="accent-blue-600 h-3 w-3" checked={c.enabled !== false} onChange={async (e) => {
-                          const next = await updateCategory(c.id, { enabled: e.target.checked })
-                          setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                          try {
+                            setActionError(null)
+                            const next = await updateCategory(c.id, { enabled: e.target.checked })
+                            setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                            broadcastUpdate('categories')
+                          } catch (err) {
+                            const msg = getErrMsg(err)
+                            setActionError(msg)
+                            alert(msg)
+                          }
                         }} />
                         <span>{c.enabled !== false ? t('admin.categories.enabled') : t('admin.categories.disabled')}</span>
                       </label>
@@ -353,6 +377,7 @@ export default function AdminDashboard() {
                         const up = await uploadFile(f)
                         const next = await updateCategory(c.id, { image: up.url })
                         setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                        broadcastUpdate('categories')
                       } catch (err) {
                         console.error('Category update failed:', err)
                         const msg = getErrMsg(err)
@@ -369,6 +394,7 @@ export default function AdminDashboard() {
                       setActionError(null)
                       await deleteCategory(c.id)
                       setCategories((arr) => arr.filter((x) => x.id !== c.id))
+                      broadcastUpdate('categories')
                     } catch (e) {
                       const msg = getErrMsg(e)
                       setActionError(msg)

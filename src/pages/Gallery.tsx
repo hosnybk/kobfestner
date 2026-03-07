@@ -10,32 +10,53 @@ export default function Gallery() {
   const selectedCategory = (searchParams.get('category') || '').toLowerCase()
   const [projects, setProjects] = useState<Array<{ id: number; category: string; image: string }>>([])
   const [visibleCount, setVisibleCount] = useState(9)
-  useEffect(() => {
-    let on = true
-    fetchGallery().then((items) => {
-      if (on) setProjects(items || [])
-    })
-    return () => {
-      on = false
-    }
-  }, [])
   const [categories, setCategories] = useState<string[]>([])
   useEffect(() => {
-    let on = true
-    fetchCategories()
-      .then((cats) => {
-        if (on && cats?.length) setCategories(cats)
-      })
-      .catch(() => {
-        // fallback: derive from current projects
-        const set = new Set<string>()
-        projects.forEach((p) => set.add(p.category))
-        setCategories(Array.from(set))
-      })
-    return () => {
-      on = false
+    let alive = true
+
+    const refresh = async () => {
+      try {
+        const [items, cats] = await Promise.all([fetchGallery(), fetchCategories()])
+        if (!alive) return
+        setProjects(items || [])
+        if (cats?.length) setCategories(cats)
+      } catch {
+        void 0
+      }
     }
-  }, [projects])
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    refresh()
+
+    let ch: BroadcastChannel | null = null
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('kobfenster-updates')
+        ch.onmessage = () => refresh()
+      }
+    } catch {
+      ch = null
+    }
+
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', onVisibility)
+    const id = window.setInterval(refresh, 60_000)
+
+    return () => {
+      alive = false
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.clearInterval(id)
+      try {
+        ch?.close()
+      } catch {
+        void 0
+      }
+    }
+  }, [])
   const activeCategory = categories.includes(selectedCategory) ? selectedCategory : 'all'
   const filteredProjects = useMemo(() => projects.filter((project) => activeCategory === 'all' || project.category === activeCategory), [projects, activeCategory])
   const visibleProjects = filteredProjects.slice(0, visibleCount)
