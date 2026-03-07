@@ -15,8 +15,8 @@ import { kv } from '@vercel/kv'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const DATA_DIR = path.join(__dirname, 'data')
-const UPLOADS_DIR = path.join(__dirname, 'uploads')
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data')
+const UPLOADS_DIR = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads')
 const DIST_DIR = path.join(__dirname, 'dist')
 
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
@@ -94,9 +94,14 @@ const writeData = async (key, file, data) => {
 
 // Ensure Data (Local Only)
 const ensureDataFiles = async () => {
-  if (process.env.VERCEL) return // No FS init needed on Vercel
+  if (process.env.VERCEL) {
+     // Ensure /tmp/uploads exists on Vercel
+     try { await fs.mkdir(UPLOADS_DIR, { recursive: true }) } catch {}
+     return
+  }
   
   await fs.mkdir(DATA_DIR, { recursive: true })
+  await fs.mkdir(UPLOADS_DIR, { recursive: true })
   try { await fs.access(PRODUCTS_FILE) } catch { await fs.writeFile(PRODUCTS_FILE, JSON.stringify(defaultProducts, null, 2)) }
   try { await fs.access(GALLERY_FILE) } catch { await fs.writeFile(GALLERY_FILE, JSON.stringify(defaultGallery, null, 2)) }
   try { await fs.access(CATEGORIES_FILE) } catch { await fs.writeFile(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2)) }
@@ -172,17 +177,17 @@ const requireAuth = (req, res, next) => {
 }
 
 // Uploads
-if (!process.env.VERCEL) {
-  await fs.mkdir(UPLOADS_DIR, { recursive: true })
-} else {
-  // On Vercel, /tmp is ephemeral
-  fs.mkdir(UPLOADS_DIR, { recursive: true }).catch(() => {})
-}
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_')
-    cb(null, `${Date.now()}_${safe}`)
+  destination: async (req, file, cb) => {
+    if (process.env.VERCEL) {
+       try { await fs.mkdir(UPLOADS_DIR, { recursive: true }) } catch {}
+    }
+    cb(null, UPLOADS_DIR)
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname)
+    const name = `${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`
+    cb(null, name)
   }
 })
 const upload = multer({ storage })
@@ -240,9 +245,10 @@ app.post('/api/auth/login', async (req, res) => {
      return res.status(500).json({ error: 'Server password not configured' })
   }
 
+  // Debug hash comparison
   const ok = await bcrypt.compare(password, ADMIN_PASSWORD_HASH)
   if (!ok) {
-    console.error('Password mismatch')
+    console.error('Password mismatch. Hash:', ADMIN_PASSWORD_HASH.substring(0, 10) + '...')
     return res.status(401).json({ error: 'Invalid credentials (pass)' })
   }
 
@@ -431,8 +437,24 @@ app.post('/api/contact', async (req, res) => {
 
 
 // Upload endpoint (auth required)
-app.post('/api/uploads', requireAuth, upload.single('file'), (req, res) => {
+app.post('/api/uploads', requireAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' })
+  
+  if (process.env.VERCEL) {
+     // On Vercel, we need to read the file from /tmp and return it as base64 or upload to external storage
+     // Since we don't have external storage, we will return a Data URI for immediate display
+     // Note: This is a temporary workaround. Real persistence requires S3/Cloudinary.
+     const buffer = await fs.readFile(req.file.path)
+     const base64 = buffer.toString('base64')
+     const mime = req.file.mimetype
+     const dataUrl = `data:${mime};base64,${base64}`
+     
+     // Clean up tmp file
+     try { await fs.unlink(req.file.path) } catch {}
+     
+     return res.status(201).json({ url: dataUrl })
+  }
+
   const url = `/uploads/${req.file.filename}`
   res.status(201).json({ url })
 })
