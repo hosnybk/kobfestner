@@ -448,10 +448,32 @@ app.post('/api/contact', async (req, res) => {
   res.status(201).json({ ok: true })
 })
 
-app.post('/api/blob/upload', requireAuth, async (req, res) => {
+app.get('/api/blob/session', requireAuth, async (_req, res) => {
+  const token = jwt.sign({ purpose: 'blob-upload', user: ADMIN_USERNAME }, SESSION_SECRET, { expiresIn: '10m' })
+  res.json({ token })
+})
+
+app.post('/api/blob/upload', async (req, res) => {
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN
     if (!token) return res.status(500).json({ error: 'Blob not configured (missing BLOB_READ_WRITE_TOKEN)' })
+
+    const q = typeof req.query?.u === 'string' ? req.query.u : ''
+    let ok = false
+    if (req.session && req.session.user === ADMIN_USERNAME) ok = true
+    if (!ok && process.env.VERCEL) {
+      const u = verifyToken(req)
+      if (u) ok = true
+    }
+    if (!ok && q) {
+      try {
+        const decoded = jwt.verify(q, SESSION_SECRET)
+        if (decoded && decoded.purpose === 'blob-upload' && decoded.user === ADMIN_USERNAME) ok = true
+      } catch {
+        ok = false
+      }
+    }
+    if (!ok) return res.status(401).json({ error: 'Unauthorized' })
 
     const body = req.body || {}
     const request = new Request(getFullUrl(req), {

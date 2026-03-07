@@ -80,7 +80,12 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     const mod = (await import('@vercel/blob/client')) as unknown as {
       upload: (pathname: string, file: File, opts: { access: 'public' | 'private'; handleUploadUrl: string }) => Promise<{ url: string }>
     }
-    const blob = await mod.upload(file.name, file, { access: 'public', handleUploadUrl: '/api/blob/upload' })
+    const s = await fetch(api('/api/blob/session'), { ...cred })
+    await assertOk(s, 'Upload failed')
+    const sess = (await s.json().catch(() => null)) as unknown
+    const token = isRecord(sess) && typeof sess.token === 'string' ? sess.token : ''
+    if (!token) throw new Error('Upload failed (missing upload session)')
+    const blob = await mod.upload(file.name, file, { access: 'public', handleUploadUrl: `/api/blob/upload?u=${encodeURIComponent(token)}` })
     return { url: blob.url }
   }
 
