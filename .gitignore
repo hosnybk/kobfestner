@@ -30,3 +30,6 @@ dist.zip
 
 # Azure
 swa-cli.config.json
+
+.vercel
+.env*.local
