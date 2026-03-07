@@ -37,7 +37,7 @@ export default function Home() {
         setCategories(next)
       })
       .catch((e) => console.error('Failed to load categories', e))
-  }, []) // Remove dependency on homeContent.categoryImages to prevent loops
+  }, [homeContent.categoryImages])
   const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase)
   useEffect(() => {
     fetchGallery()

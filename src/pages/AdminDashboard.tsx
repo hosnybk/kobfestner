@@ -22,6 +22,16 @@ export default function AdminDashboard() {
   const [messagesCount, setMessagesCount] = useState<number>(0)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  const getErrMsg = (e: unknown): string => {
+    if (e instanceof Error && e.message) return e.message
+    if (typeof e === 'string') return e
+    try {
+      return JSON.stringify(e)
+    } catch {
+      return String(e)
+    }
+  }
+
   useEffect(() => {
     let active = true
     authMe().then((me) => {
@@ -83,7 +93,7 @@ export default function AdminDashboard() {
       const { url } = await uploadFile(file)
       return url
     } catch (e) {
-      const msg = (e as any)?.message || String(e)
+      const msg = getErrMsg(e)
       setActionError(msg)
       throw e
     }
@@ -266,7 +276,7 @@ export default function AdminDashboard() {
                 formEl.reset()
               } catch (err) {
                 console.error('Category creation failed:', err)
-                const msg = (err as any).message || JSON.stringify(err)
+                const msg = getErrMsg(err)
                 setActionError(msg)
                 alert(`Error: ${msg}`)
               }
@@ -314,7 +324,7 @@ export default function AdminDashboard() {
                         setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
                       } catch (err) {
                         console.error('Category update failed:', err)
-                        const msg = (err as any).message || JSON.stringify(err)
+                        const msg = getErrMsg(err)
                         setActionError(msg)
                         alert(`Upload failed: ${msg}`)
                       } finally {

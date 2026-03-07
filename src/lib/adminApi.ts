@@ -15,17 +15,26 @@ function getApiBase(): string {
 }
 const api = (path: string) => `${getApiBase()}${path}`
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
   const status = `${res.status} ${res.statusText || ''}`.trim()
   const contentType = res.headers.get('content-type') || ''
   try {
     if (contentType.includes('application/json')) {
-      const body = (await res.json().catch(() => null)) as any
-      const msg =
-        (typeof body?.error === 'string' && body.error) ||
-        (typeof body?.message === 'string' && body.message) ||
-        (typeof body === 'string' && body) ||
-        (body ? JSON.stringify(body) : '')
+      const body = (await res.json().catch(() => null)) as unknown
+      let msg = ''
+      if (typeof body === 'string') {
+        msg = body
+      } else if (isRecord(body)) {
+        if (typeof body.error === 'string' && body.error) msg = body.error
+        else if (typeof body.message === 'string' && body.message) msg = body.message
+        else msg = JSON.stringify(body)
+      } else if (body) {
+        msg = JSON.stringify(body)
+      }
       return msg ? `${msg} (${status})` : `${fallback} (${status})`
     }
     const text = await res.text().catch(() => '')
