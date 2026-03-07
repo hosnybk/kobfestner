@@ -24,19 +24,29 @@ export default function AdminDashboard() {
   useEffect(() => {
     let active = true
     authMe().then((me) => {
+      console.log('Auth check result:', me)
       if (!active) return
       if (!me.authenticated) {
         navigate('/admin', { replace: true })
         return
       }
-      Promise.all([listProducts(), listGallery(), listCategories(), listContactMessages()]).then(([p, g, cats, msgs]) => {
-        if (!active) return
-        setProducts(p)
-        setGallery(g)
-        setCategories(cats)
-        setMessagesCount(Array.isArray(msgs) ? msgs.length : 0)
-        setIsLoading(false)
-      })
+      Promise.all([listProducts(), listGallery(), listCategories(), listContactMessages()])
+        .then(([p, g, cats, msgs]) => {
+          if (!active) return
+          setProducts(p)
+          setGallery(g)
+          setCategories(cats)
+          setMessagesCount(Array.isArray(msgs) ? msgs.length : 0)
+          setIsLoading(false)
+        })
+        .catch((err) => {
+          console.error('Dashboard load error:', err)
+          // Still show dashboard even if some data fails
+          setIsLoading(false)
+        })
+    }).catch(e => {
+       console.error('Auth check failed:', e)
+       navigate('/admin', { replace: true })
     })
     return () => {
       active = false
