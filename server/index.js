@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import nodemailer from 'nodemailer'
 import { kv } from '@vercel/kv'
+import { put } from '@vercel/blob'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -441,34 +442,41 @@ app.post('/api/uploads', requireAuth, (req, res, next) => {
   
   try {
     if (process.env.VERCEL) {
-       console.log('Vercel environment detected. Path:', req.file.path)
-       // On Vercel, we need to read the file from /tmp and return it as base64 or upload to external storage
-       // Since we don't have external storage, we will return a Data URI for immediate display
-       // Note: This is a temporary workaround. Real persistence requires S3/Cloudinary.
+       console.log('Vercel environment detected. File in memory.')
        
-       // Verify file exists
-       try {
-         await fs.access(req.file.path)
-         console.log('File exists at path')
-       } catch (e) {
-         console.error('File not found at path:', e)
-         throw new Error('File upload failed: temp file not found')
+       if (!req.file.buffer) {
+          throw new Error('File buffer missing')
        }
 
-       const buffer = await fs.readFile(req.file.path)
-       const base64 = buffer.toString('base64')
-       const mime = req.file.mimetype
-       const dataUrl = `data:${mime};base64,${base64}`
-       
-       // Clean up tmp file
-       try { await fs.unlink(req.file.path) } catch {}
-       
-       console.log('Upload successful (base64)')
-       return res.status(201).json({ url: dataUrl })
+       // Upload to Vercel Blob (CDN)
+       try {
+         const blob = await put(req.file.originalname, req.file.buffer, {
+           access: 'public',
+           token: process.env.BLOB_READ_WRITE_TOKEN
+         })
+         console.log('Upload successful (Vercel Blob):', blob.url)
+         return res.status(201).json({ url: blob.url })
+       } catch (blobError) {
+         console.error('Vercel Blob upload failed:', blobError)
+         
+         // Fallback to Base64 Data URI if Blob fails (or token missing)
+         console.log('Falling back to Base64 Data URI')
+         const base64 = req.file.buffer.toString('base64')
+         const mime = req.file.mimetype
+         const dataUrl = `data:${mime};base64,${base64}`
+         return res.status(201).json({ url: dataUrl })
+       }
     }
 
-    const url = `/uploads/${req.file.filename}`
-    console.log('Upload successful (local):', url)
+    // Local environment: Write buffer to disk
+    const ext = path.extname(req.file.originalname)
+    const filename = `${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`
+    const filepath = path.join(UPLOADS_DIR, filename)
+    
+    await fs.writeFile(filepath, req.file.buffer)
+    const url = `/uploads/${filename}`
+    
+    console.log('Upload successful (local disk):', url)
     res.status(201).json({ url })
   } catch (err) {
     console.error('Upload processing error:', err)
