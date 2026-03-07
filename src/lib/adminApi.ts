@@ -4,6 +4,10 @@ const json = (data: unknown) => JSON.stringify(data)
 const headers = { 'Content-Type': 'application/json', Accept: 'application/json' }
 const cred: RequestInit = { credentials: 'include' }
 function getApiBase(): string {
+  // On Vercel, the frontend and API are on the same domain, so empty string is best
+  if (window.location.hostname.includes('vercel.app')) {
+    return ''
+  }
   const envObj = (import.meta as unknown as { env?: Record<string, string | undefined> }) || {}
   const base = envObj?.env?.VITE_API_BASE_URL || ''
   if (!base) return ''
