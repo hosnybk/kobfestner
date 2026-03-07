@@ -208,17 +208,43 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials (pass)' })
   }
 
-  req.session.user = ADMIN_USERNAME
-  await new Promise((resolve) => req.session.save(resolve)) // Force save session
+  // Success!
+  // Set session for Hostinger/Dev
+  if (req.session) {
+    req.session.user = ADMIN_USERNAME
+    await new Promise((resolve) => req.session.save(resolve))
+  }
+
+  // Set JWT Cookie for Vercel
+  const token = jwt.sign({ user: ADMIN_USERNAME }, SESSION_SECRET, { expiresIn: '2h' })
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    secure: IS_PROD,
+    sameSite: 'lax',
+    maxAge: 2 * 60 * 60 * 1000 // 2 hours
+  })
+
   res.json({ ok: true, username: ADMIN_USERNAME })
 })
 app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }))
+  if (req.session) {
+    req.session.destroy(() => {})
+  }
+  res.clearCookie('auth_token')
+  res.json({ ok: true })
 })
 app.get('/api/auth/me', (req, res) => {
   res.set('Cache-Control', 'no-store')
-  console.log('Session check:', req.sessionID, req.session)
-  res.json({ authenticated: req.session?.user === ADMIN_USERNAME, username: req.session?.user || null })
+  
+  let username = null
+  if (req.session && req.session.user === ADMIN_USERNAME) {
+    username = req.session.user
+  } else if (process.env.VERCEL) {
+    username = verifyToken(req)
+  }
+
+  console.log('Session check:', { username, sessionID: req.sessionID })
+  res.json({ authenticated: Boolean(username), username })
 })
 
 // Products
