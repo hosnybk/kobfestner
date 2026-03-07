@@ -15,6 +15,15 @@ import { kv } from '@vercel/kv'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const DATA_DIR = path.join(__dirname, 'data')
+const UPLOADS_DIR = path.join(__dirname, 'uploads')
+const DIST_DIR = path.join(__dirname, 'dist')
+
+const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
+const GALLERY_FILE = path.join(DATA_DIR, 'gallery.json')
+const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json')
+const CONTACT_FILE = path.join(DATA_DIR, 'contact.json')
+
 // --- DATA ACCESS LAYER ---
 // Abstract storage to switch between File System (Dev) and Vercel KV (Prod)
 
