@@ -2,9 +2,9 @@
   "categories": ["fenster", "tueren", "rolllaeden", "raffstore", "garagentor"],
   "categoryImages": {
     "fenster": "/categories/fenster.jpg",
-    "tueren": "/categories/tueren.jpg",
-    "rolllaeden": "/categories/rolllaeden.jpg",
-    "raffstore": "/categories/raffstore.jpg",
+    "tueren": "/categories/tueren.webp",
+    "rolllaeden": "/categories/rolllaeden.png",
+    "raffstore": "/categories/raffstore.webp",
     "garagentor": "/categories/garagentor.svg"
   },
   "showcase": ["/showcase/1.jpg", "/showcase/2.jpg", "/showcase/3.jpg", "/showcase/4.jpg", "/showcase/5.jpg", "/showcase/6.jpg"]

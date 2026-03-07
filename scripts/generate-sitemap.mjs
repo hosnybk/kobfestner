@@ -9,7 +9,7 @@ let site = process.env.SITE_URL || process.env.VITE_SITE_URL || ''
 for (const a of process.argv.slice(2)) {
   if (a.startsWith('--site=')) site = a.slice(7)
 }
-if (!site) site = 'https://kobfenster.de'
+if (!site) site = 'https://bisque-dugong-112314.hostingersite.com'
 if (site.endsWith('/')) site = site.slice(0, -1)
 
 const urls = ['/', '/about', '/products', '/gallery', '/contact']

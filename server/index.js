@@ -38,12 +38,12 @@ const ensureDataFiles = async () => {
     await fs.access(CATEGORIES_FILE)
   } catch {
     const defaultCategories = [
-      { id: 'fenster', enabled: true, image: '/categories/fenster.jpg' },
-      { id: 'tueren', enabled: true, image: '/categories/tueren.jpg' },
-      { id: 'rolllaeden', enabled: true, image: '/categories/rolllaeden.jpg' },
-      { id: 'raffstore', enabled: true, image: '/categories/raffstore.jpg' },
-      { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
-    ]
+    { id: 'fenster', enabled: true, image: '/categories/fenster.jpg' },
+    { id: 'tueren', enabled: true, image: '/categories/tueren.webp' },
+    { id: 'rolllaeden', enabled: true, image: '/categories/rolllaeden.png' },
+    { id: 'raffstore', enabled: true, image: '/categories/raffstore.webp' },
+    { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
+  ]
     await fs.writeFile(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2))
   }
   try { await fs.access(CONTACT_FILE) } catch { await fs.writeFile(CONTACT_FILE, '[]') }
