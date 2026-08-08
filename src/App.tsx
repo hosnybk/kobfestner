@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { setMeta, ensureCanonical } from './lib/seo'
 import LanguageSwitcher from './components/LanguageSwitcher.tsx'
 import { AnimatePresence } from 'framer-motion'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 function App() {
   const { t, i18n } = useTranslation()
@@ -230,6 +231,7 @@ function App() {
           </div>
         </div>
       </footer>}
+      <SpeedInsights />
     </div>
   )
 }
